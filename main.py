@@ -2,12 +2,17 @@ import os
 import asyncio
 from aiosmtpd.controller import Controller
 from aiosmtpd.handlers import AsyncMessage
+from email import policy
+from email.parser import BytesParser
 from email.message import Message
 from datetime import datetime
 
 
 class CustomHandler(AsyncMessage):
     async def handle_message(self, message: Message) -> None:
+        await self.process_message(message)
+
+    async def process_message(self, message: Message) -> None:
         envelope_from = message["From"]
         envelope_to = message["To"]
         subject = message["Subject"]
@@ -59,6 +64,11 @@ class CustomHandler(AsyncMessage):
         with open(os.path.join(folder, f"{filename}.txt"), "w") as f:
             f.write(header_content)
             f.write(text_content)
+
+    def process_eml_file(self, file_path: str) -> None:
+        with open(file_path, 'rb') as f:
+            message = BytesParser(policy=policy.default).parse(f)
+        asyncio.run(self.process_message(message))
 
 
 async def main():
