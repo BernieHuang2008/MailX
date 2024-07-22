@@ -3,7 +3,7 @@ import asyncio
 from aiosmtpd.controller import Controller
 from aiosmtpd.handlers import AsyncMessage
 from email.message import Message
-
+from datetime import datetime
 
 class CustomHandler(AsyncMessage):
     async def handle_message(self, message: Message) -> None:
@@ -15,21 +15,42 @@ class CustomHandler(AsyncMessage):
         print(f"Message to  : {envelope_to}")
         print(f"Message data: {content}")
 
-        # 假设收件人的电子邮件地址为单个地址，而不是多个地址
-        recipient_address = envelope_to
-        local_part, domain = recipient_address.split("@", 1)
+        recipient_addresses = envelope_to.split(",")
+        for recipient_address in recipient_addresses:
+            local_part, domain = recipient_address.strip().split("@", 1)
 
-        # 确保目标目录存在
-        folder = os.path.join("emails", local_part)
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+            folder = os.path.join("emails", local_part)
+            if not os.path.exists(folder):
+                os.makedirs(folder)
 
-        #TODO 解析RAW TEXT
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            filename = f"email_{timestamp}"
 
-        # 将电子邮件内容保存到文件
-        with open(os.path.join(folder, "email.txt"), "a") as f:
-            f.write(content + "\n\n")
+            try:
+                self.save_email_content(folder, filename, message)
+            except Exception as e:
+                print(f"Error saving email to {filename}: {e}")
 
+    def save_email_content(self, folder: str, filename: str, message: Message) -> None:
+        text_content = ""
+
+        if message.is_multipart():
+            for part in message.walk():
+                content_type = part.get_content_type()
+                if part.get_content_maintype() == 'text':
+                    text = part.get_payload(decode=True).decode(part.get_content_charset() or 'utf-8')
+                    text_content += text + "\n\n"
+                else:
+                    attachment_filename = part.get_filename()
+                    if attachment_filename:
+                        attachment_data = part.get_payload(decode=True)
+                        with open(os.path.join(folder, attachment_filename), "wb") as f:
+                            f.write(attachment_data)
+        else:
+            text_content = message.get_payload(decode=True).decode(message.get_content_charset() or 'utf-8')
+
+        with open(os.path.join(folder, f"{filename}.txt"), "w") as f:
+            f.write(text_content)
 
 async def main():
     handler = CustomHandler()
@@ -43,7 +64,6 @@ async def main():
         pass
     finally:
         controller.stop()
-
 
 if __name__ == "__main__":
     asyncio.run(main())
