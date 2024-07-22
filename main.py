@@ -24,6 +24,8 @@ class CustomHandler(AsyncMessage):
         if not os.path.exists(folder):
             os.makedirs(folder)
 
+        #TODO 解析RAW TEXT
+
         # 将电子邮件内容保存到文件
         with open(os.path.join(folder, "email.txt"), "a") as f:
             f.write(content + "\n\n")
