@@ -1,7 +1,0 @@
-From: testsender@example.com
-To: testrecipient@example.com
-Subject: Test Email with Attachment
-Date: 20240722192205
-
-This is a test email with both plain text and HTML content.
-
