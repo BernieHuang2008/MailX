@@ -1,0 +1,14 @@
+{
+    "eml/change my email.eml": {
+        "timestamp": "20240724112448",
+        "folders": [
+            "emails/\"2024mitlist"
+        ]
+    },
+    "eml/test.eml": {
+        "timestamp": "20240724112433",
+        "folders": [
+            "emails/bernie"
+        ]
+    }
+}
